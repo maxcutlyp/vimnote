@@ -19,7 +19,7 @@ def main(stdscr):
 
     logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
-    tv = BookView()
+    tv = BookView(CONFIG['notedir'])
 
     while True:
         tv.draw(stdscr)
