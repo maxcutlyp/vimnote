@@ -19,10 +19,10 @@ def main(stdscr):
 
     logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
-    tv = BookView(CONFIG['notedir'])
+    view = BookView(CONFIG['notedir'])
 
     while True:
-        tv.draw(stdscr)
+        view.draw(stdscr)
         stdscr.refresh()
 
         # break on q, ^D (chr(4)), ^C (KeyboardInterrupt)
@@ -31,6 +31,9 @@ def main(stdscr):
                 break
         except KeyboardInterrupt:
             break
+        
+        # else let the view handle it
+        view.handle_keypress(key)
 
 if __name__ == '__main__':
     curses.wrapper(main)
