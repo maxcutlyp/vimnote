@@ -49,3 +49,4 @@ option|description|default
 -|-|-
 previewratio|the amount of the screen that the note preview uses, 0.0 to 1.0|0.5
 confirmdelete|whether to ask for confirmation before deleting, True or False|True
+notedir|where vimnote files are stored|`~/.vimnote/`
