@@ -43,7 +43,7 @@ autocmd BufRead,BufNewFile *.vmnt set filetype=your_filetype_here
 where `your_filetype_here` is a valid Vim filetype. For a list of filetypes, type `:setfiletype ` (with a space at the end) in Vim and hit tab, or if you have a file whose type you want to use, run `:set filetype` (with a space in between) while editing that file. I use `markdown` but you can use whatever you'd like, or even make your own.
 
 ### vimnoterc
-The config file for VimNote is `~/.config/vimnoterc`. Use `#` at the start of a line for a comment. The syntax is `option=value`. Valid options are as follows:
+The config file for VimNote is `~/.config/vimnoterc`. Use `#` at the start of a line for a comment. The syntax is `option = value`. Valid options are as follows:
 
 option|description|default
 -|-|-
