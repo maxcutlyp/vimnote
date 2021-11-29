@@ -26,7 +26,7 @@ def main(stdscr):
         stdscr.refresh()
 
         # break on q, ^D (chr(4)), ^C (KeyboardInterrupt)
-        kills = (ord('q'), 4) if view.search is None else (4,)
+        kills = (ord('q'), 4) if not view.is_searching else (4,)
         try:
             if (key := stdscr.getch()) in kills:
                 break
@@ -37,4 +37,5 @@ def main(stdscr):
         view.handle_keypress(key)
 
 if __name__ == '__main__':
+    os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
     curses.wrapper(main)

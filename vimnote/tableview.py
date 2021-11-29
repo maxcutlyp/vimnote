@@ -12,6 +12,8 @@ class TableView:
         self.content = content
         self.headers = headers
         self.sort_by = [3, True] # sort by last edited descending by default
+        self.is_searching = False
+        self.search_pos = 0
         self.search = None
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
 
@@ -57,10 +59,15 @@ class TableView:
         stdscr.addstr(1, num_size, f' {self.headers[0]:{size}.{size}} {sort_icon if is_selected_header else ""} ', curses.color_pair(2) if is_selected_header else curses.color_pair(1))
 
     def draw_search(self, stdscr, num_size: int):
+        stdscr.move(2, 0)
+        stdscr.clrtoeol()
         if self.search is None:
             stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
-            return
-        stdscr.addstr(2, num_size + 1, f'Search: {self.search}{" " * (curses.COLS - len(self.search) - num_size - 9)}')
+        else:
+            if self.is_searching:
+                stdscr.addstr(2, 0, ' ' * curses.COLS, curses.color_pair(2))
+            stdscr.addstr(2, num_size + 1, f'Search: {self.search}', curses.color_pair(2) if self.is_searching else curses.color_pair(0))
+            stdscr.move(2, num_size + 9 + self.search_pos)
 
     def draw(self, stdscr):
         sizes = self.get_sizes()
@@ -75,9 +82,10 @@ class TableView:
 
         # content
         self.pad.clear()
-        self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
+        if not self.is_searching:
+            self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
         for i,row in enumerate(self.content):
-            color_pair = curses.color_pair(2) if i == self.selected else curses.color_pair(0)
+            color_pair = curses.color_pair(2) if i == self.selected and not self.is_searching else curses.color_pair(0)
             self.pad.addstr(i, 0, f'{i+1:{num_size}}', color_pair)
             self.draw_row(i, row, sizes, num_size, color_pair)
         self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
@@ -90,24 +98,40 @@ class TableView:
             self.sort_by[0] = sort
             self.sort_by[1] = True
 
-    def start_search_mode(self):
-        self.search = ''
-
-    def handle_keypress(self, key):
-        match key:
-            case key if key == ord('j'):
-                if self.selected < len(self.content):
-                    self.selected += 1
-            case key if key == ord('k'):
-                if self.selected > 0:
-                    self.selected -= 1
-            case key if key == ord('/'):
-                self.start_search_mode()
-            case curses.KEY_F1:
-                self.switch_sort(0)
-            case curses.KEY_F2:
-                self.switch_sort(1)
-            case curses.KEY_F3:
-                self.switch_sort(2)
-            case curses.KEY_F4:
-                self.switch_sort(3)
+    def handle_keypress(self, key: int):
+        if not self.is_searching:
+            match key:
+                case key if key == ord('j'):
+                    if self.selected < len(self.content):
+                        self.selected += 1
+                case key if key == ord('k'):
+                    if self.selected > 0:
+                        self.selected -= 1
+                case key if key == ord('/'):
+                    self.is_searching = True
+                    if self.search is None:
+                        self.search = ''
+                    curses.curs_set(True)
+                case curses.KEY_F1:
+                    self.switch_sort(0)
+                case curses.KEY_F2:
+                    self.switch_sort(1)
+                case curses.KEY_F3:
+                    self.switch_sort(2)
+                case curses.KEY_F4:
+                    self.switch_sort(3)
+        else:
+            char = chr(key)
+            if char.isprintable():
+                self.search += char
+                self.search_pos += 1
+                return
+            match key:
+                case curses.KEY_ENTER | 10:
+                    self.is_searching = False
+                    curses.curs_set(False)
+                case 27: # escape
+                    self.is_searching = False
+                    self.search_pos = 0
+                    curses.curs_set(False)
+                    self.search = None
