@@ -1,13 +1,18 @@
 from .tableview import TableView
+from .random_content import content
+import datetime
 
-class BookView(TableView):
+class NoteView(TableView):
     def __init__(self, note_dir: str, book: str):
         # TODO: convert note_dir and book to content here
-        content = [['abcabc', '123', '01 November 2021', '11 November 2021']]*100
         headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'CREATED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
-        super().__init__(content, headers)
+        keys = [lambda title:title,
+                lambda count:int(count),
+                lambda datestr:datetime.datetime.strptime(datestr, '%I:%M%p %m-%d-%Y'),
+                lambda datestr:datetime.datetime.strptime(datestr, '%I:%M%p %m-%d-%Y')]
+        super().__init__(content, headers, keys)
 
     def draw(self, stdscr):
-        # todo: add header info and current book
+        # TODO: add current book
         super().draw(stdscr)
 

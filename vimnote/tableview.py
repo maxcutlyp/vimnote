@@ -2,15 +2,15 @@ import curses
 import math
 import logging
 
-from typing import List, Callable
+from typing import List, Callable, Any
 
 class TableView:
-    def __init__(self, content: List[List[str]], headers: List[str]):
-        self.select_color = curses.COLOR_CYAN
+    def __init__(self, content: List[List[str]], headers: List[str], keys: List[Callable[[str], Any]]):
         self.selected = 0
         self.scroll = 0
         self.content = content
         self.headers = headers
+        self.keys = keys
         self.sort_by = [3, True] # sort by last edited descending by default
         self.is_searching = False
         self.search_pos = 0
@@ -22,6 +22,8 @@ class TableView:
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)      # selection
         try: curses.init_pair(3, 245, -1)                               # greyed out
         except ValueError: curses.init_pair(3, curses.COLOR_WHITE, -1)  # for terminals with only 8 colors
+
+        self.resort_content()
     
     def get_sizes(self):
         sizes = [0] * (len(self.content[0]) - 1)
@@ -96,13 +98,16 @@ class TableView:
         self.effective_rows = row_num - 1
         self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
 
+    def resort_content(self):
+        self.content.sort(key=lambda row: self.keys[self.sort_by[0]](row[self.sort_by[0]]), reverse=self.sort_by[1])
+
     def switch_sort(self, sort: int):
-        logging.log(logging.DEBUG, sort)
         if self.sort_by[0] == sort:
             self.sort_by[1] = not self.sort_by[1]
         else:
             self.sort_by[0] = sort
-            self.sort_by[1] = True
+            self.sort_by[1] = sort != 0 # sort titles ascending by default, everything else descending
+        self.resort_content()
 
     def handle_keypress(self, key: int):
         if not self.is_searching:
