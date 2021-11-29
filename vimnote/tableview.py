@@ -15,6 +15,7 @@ class TableView:
         self.is_searching = False
         self.search_pos = 0
         self.search = None
+        self.effective_rows = len(self.content)
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
 
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)     # header
@@ -68,7 +69,7 @@ class TableView:
                 stdscr.addstr(2, 0, ' ' * curses.COLS, curses.color_pair(2))
             stdscr.addstr(2, num_size + 1, f'Search: {self.search}', curses.color_pair(2) if self.is_searching else curses.color_pair(0))
             stdscr.move(2, num_size + 9 + self.search_pos)
-
+        
     def draw(self, stdscr):
         sizes = self.get_sizes()
         num_size = math.floor(math.log10(len(self.content) + 1) + 1)
@@ -84,10 +85,15 @@ class TableView:
         self.pad.clear()
         if not self.is_searching:
             self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
-        for i,row in enumerate(self.content):
-            color_pair = curses.color_pair(2) if i == self.selected and not self.is_searching else curses.color_pair(0)
-            self.pad.addstr(i, 0, f'{i+1:{num_size}}', color_pair)
-            self.draw_row(i, row, sizes, num_size, color_pair)
+        row_num = 0 # not using enumerate because don't always increment
+        for row in self.content:
+            if self.search is not None and any(word not in row[0] for word in self.search.split()):
+                continue
+            color_pair = curses.color_pair(2) if row_num == self.selected and not self.is_searching else curses.color_pair(0)
+            self.pad.addstr(row_num, 0, f'{row_num+1:{num_size}}', color_pair)
+            self.draw_row(row_num, row, sizes, num_size, color_pair)
+            row_num += 1
+        self.effective_rows = row_num - 1
         self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
 
     def switch_sort(self, sort: int):
@@ -102,7 +108,7 @@ class TableView:
         if not self.is_searching:
             match key:
                 case key if key == ord('j'):
-                    if self.selected < len(self.content):
+                    if self.selected < self.effective_rows:
                         self.selected += 1
                 case key if key == ord('k'):
                     if self.selected > 0:
@@ -130,6 +136,8 @@ class TableView:
                 case curses.KEY_ENTER | 10:
                     self.is_searching = False
                     curses.curs_set(False)
+                    self.selected = 0
+                    self.scroll = 0
                 case 27: # escape
                     self.is_searching = False
                     self.search_pos = 0
