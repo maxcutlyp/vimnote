@@ -18,12 +18,24 @@ class TableView:
         self.effective_rows = len(self.content)
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
 
+        self.noscroll_size = 0.5 # the middle 50% can be navigated without scrolling
+
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)     # header
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_CYAN)      # selection
         try: curses.init_pair(3, 245, -1)                               # greyed out
         except ValueError: curses.init_pair(3, curses.COLOR_WHITE, -1)  # for terminals with only 8 colors
 
         self.resort_content()
+
+    def move_row(self, row):
+        self.selected = row
+        upper_cutoff_size = round((1 - self.noscroll_size)/2 * (curses.LINES-4))
+        lower_cutoff_size = round(self.noscroll_size*(curses.LINES-4)) + upper_cutoff_size
+        if self.selected > self.scroll + lower_cutoff_size:
+            self.scroll = self.selected - lower_cutoff_size
+        elif self.selected < self.scroll + upper_cutoff_size:
+            self.scroll = self.selected - upper_cutoff_size
+        self.scroll = max(0, min(self.scroll, self.effective_rows - (curses.LINES - 4)))
     
     def get_sizes(self):
         sizes = [0] * (len(self.content[0]) - 1)
@@ -114,10 +126,14 @@ class TableView:
             match key:
                 case key if key == ord('j'):
                     if self.selected < self.effective_rows:
-                        self.selected += 1
+                        self.move_row(self.selected + 1)
                 case key if key == ord('k'):
                     if self.selected > 0:
-                        self.selected -= 1
+                        self.move_row(self.selected - 1)
+                case key if key == ord('G'):
+                    self.move_row(self.effective_rows)
+                case key if key == ord('g'):
+                    self.move_row(0)
                 case key if key == ord('/'):
                     self.is_searching = True
                     if self.search is None:
