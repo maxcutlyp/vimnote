@@ -26,8 +26,9 @@ def main(stdscr):
         stdscr.refresh()
 
         # break on q, ^D (chr(4)), ^C (KeyboardInterrupt)
+        kills = (ord('q'), 4) if view.search is None else (4,)
         try:
-            if (key := stdscr.getch()) in (ord('q'), 4):
+            if (key := stdscr.getch()) in kills:
                 break
         except KeyboardInterrupt:
             break

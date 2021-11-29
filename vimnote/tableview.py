@@ -2,7 +2,7 @@ import curses
 import math
 import logging
 
-from typing import List
+from typing import List, Callable
 
 class TableView:
     def __init__(self, content: List[List[str]], headers: List[str]):
@@ -12,7 +12,7 @@ class TableView:
         self.content = content
         self.headers = headers
         self.sort_by = [3, True] # sort by last edited descending by default
-        self.is_searching = False
+        self.search = None
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
 
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)     # header
@@ -29,7 +29,7 @@ class TableView:
         sizes[1] += 1 # dates look too squished next to each other
         return sizes
 
-    def draw_row(self, row_num, row, sizes, num_size, color_pair):
+    def draw_row(self, row_num: int, row: int, sizes: List[int], num_size: int, color_pair):
         so_far = 0
         for item,size in reversed(list(zip(row[1:], sizes))):
             self.pad.addstr(row_num, curses.COLS - size - so_far, item, color_pair)
@@ -39,7 +39,7 @@ class TableView:
         size = remaining_size - (1 if needs_overflow else 0)
         self.pad.addstr(row_num, num_size + 1, f'{row[0]:{size}.{size}}{"…" if needs_overflow else ""}', color_pair)
 
-    def draw_row_header(self, stdscr, sizes, num_size):
+    def draw_row_header(self, stdscr, sizes: List[int], num_size: int):
         so_far = 0
         sort_icon = 'v' if self.sort_by[1] else '^'
         for i,(item,size) in reversed(list(enumerate(zip(self.headers[1:], sizes)))):
@@ -56,8 +56,11 @@ class TableView:
         is_selected_header = self.sort_by[0] == 0
         stdscr.addstr(1, num_size, f' {self.headers[0]:{size}.{size}} {sort_icon if is_selected_header else ""} ', curses.color_pair(2) if is_selected_header else curses.color_pair(1))
 
-    def draw_search(self, stdscr, num_size):
-        stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(0) if self.is_searching else curses.color_pair(3))
+    def draw_search(self, stdscr, num_size: int):
+        if self.search is None:
+            stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
+            return
+        stdscr.addstr(2, num_size + 1, f'Search: {self.search}{" " * (curses.COLS - len(self.search) - num_size - 9)}')
 
     def draw(self, stdscr):
         sizes = self.get_sizes()
@@ -79,7 +82,7 @@ class TableView:
             self.draw_row(i, row, sizes, num_size, color_pair)
         self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
 
-    def switch_sort(self, sort):
+    def switch_sort(self, sort: int):
         logging.log(logging.DEBUG, sort)
         if self.sort_by[0] == sort:
             self.sort_by[1] = not self.sort_by[1]
@@ -87,8 +90,10 @@ class TableView:
             self.sort_by[0] = sort
             self.sort_by[1] = True
 
+    def start_search_mode(self):
+        self.search = ''
+
     def handle_keypress(self, key):
-        logging.log(logging.DEBUG, f'pressed {key}')
         match key:
             case key if key == ord('j'):
                 if self.selected < len(self.content):
@@ -96,6 +101,8 @@ class TableView:
             case key if key == ord('k'):
                 if self.selected > 0:
                     self.selected -= 1
+            case key if key == ord('/'):
+                self.start_search_mode()
             case curses.KEY_F1:
                 self.switch_sort(0)
             case curses.KEY_F2:
