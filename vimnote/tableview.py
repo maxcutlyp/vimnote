@@ -1,3 +1,4 @@
+from .exceptions import ExitException
 import curses
 import math
 import logging
@@ -15,6 +16,7 @@ class TableView:
         except AttributeError: self.keys: List[str] = []
 
         self.selected = 0
+        self.real_selected = 0 # when searching
         self.scroll = 0
         self.sort_by = [3, True] # sort by last edited descending by default
         self.is_searching = False
@@ -33,6 +35,9 @@ class TableView:
         self.resort_content()
 
     def on_enter(self, row):
+        pass # should be overridden by children
+
+    def on_escape(self):
         pass # should be overridden by children
 
     def move_row(self, row):
@@ -108,7 +113,9 @@ class TableView:
         if not self.is_searching:
             self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
         row_num = 0 # not using enumerate because don't always increment
-        for row in self.content:
+        for real_index,row in enumerate(self.content):
+            if row_num == self.selected:
+                self.real_selected = real_index
             if self.search is not None and any(word not in row[0] for word in self.search.split()):
                 continue
             color_pair = curses.color_pair(2) if row_num == self.selected and not self.is_searching else curses.color_pair(0)
@@ -147,6 +154,10 @@ class TableView:
                     if self.search is None:
                         self.search = ''
                     curses.curs_set(True)
+                case key if key == ord('q'):
+                    raise ExitException
+                case 4:
+                    raise ExitException
                 case curses.KEY_F1:
                     self.switch_sort(0)
                 case curses.KEY_F2:
@@ -156,8 +167,11 @@ class TableView:
                 case curses.KEY_F4:
                     self.switch_sort(3)
                 case 27: # escape
-                    self.search = None
-                    self.search_pos = 0
+                    if self.search is not None:
+                        self.search = None
+                        self.search_pos = 0
+                    else:
+                        self.on_escape()
                 case curses.KEY_ENTER | 10:
                     self.on_enter(self.selected)
         else:
@@ -176,3 +190,5 @@ class TableView:
                     self.search_pos = 0
                     curses.curs_set(False)
                     self.search = None
+                case 4:
+                    raise ExitException
