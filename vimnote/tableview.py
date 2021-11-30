@@ -5,12 +5,17 @@ import logging
 from typing import List, Callable, Any
 
 class TableView:
-    def __init__(self, content: List[List[str]], headers: List[str], keys: List[Callable[[str], Any]]):
+    def __init__(self):
+        # should be overridden by children, otherwise init to blank
+        try: self.content
+        except AttributeError: self.content: List[List[str]] = []
+        try: self.headers
+        except AttributeError: self.headers: List[str] = []
+        try: self.keys
+        except AttributeError: self.keys: List[str] = []
+
         self.selected = 0
         self.scroll = 0
-        self.content = content
-        self.headers = headers
-        self.keys = keys
         self.sort_by = [3, True] # sort by last edited descending by default
         self.is_searching = False
         self.search_pos = 0
@@ -26,6 +31,9 @@ class TableView:
         except ValueError: curses.init_pair(3, curses.COLOR_WHITE, -1)  # for terminals with only 8 colors
 
         self.resort_content()
+
+    def on_enter(self, row):
+        pass # should be overridden by children
 
     def move_row(self, row):
         self.selected = row
@@ -147,6 +155,11 @@ class TableView:
                     self.switch_sort(2)
                 case curses.KEY_F4:
                     self.switch_sort(3)
+                case 27: # escape
+                    self.search = None
+                    self.search_pos = 0
+                case curses.KEY_ENTER | 10:
+                    self.on_enter(self.selected)
         else:
             char = chr(key)
             if char.isprintable():
@@ -157,8 +170,7 @@ class TableView:
                 case curses.KEY_ENTER | 10:
                     self.is_searching = False
                     curses.curs_set(False)
-                    self.selected = 0
-                    self.scroll = 0
+                    self.move_row(0)
                 case 27: # escape
                     self.is_searching = False
                     self.search_pos = 0
