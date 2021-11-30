@@ -175,12 +175,22 @@ class TableView:
                 case curses.KEY_ENTER | 10:
                     self.on_enter(self.selected)
         else:
-            char = chr(key)
-            if char.isprintable():
-                self.search += char
-                self.search_pos += 1
-                return
+            logging.debug(key)
             match key:
+                case curses.KEY_BACKSPACE | 127 | 8:
+                    self.search = self.search[:self.search_pos - 1] + self.search[self.search_pos:]
+                    self.search_pos = max(self.search_pos - 1, 0)
+                case curses.KEY_DC:
+                    self.search = self.search[:self.search_pos] + self.search[self.search_pos + 1:]
+                    self.search_pos = min(self.search_pos, len(self.search))
+                case curses.KEY_LEFT:
+                    self.search_pos = max(self.search_pos - 1, 0)
+                case curses.KEY_RIGHT:
+                    self.search_pos = min(self.search_pos + 1, len(self.search))
+                case curses.KEY_UP:
+                    self.search_pos = 0
+                case curses.KEY_DOWN:
+                    self.search_pos = len(self.search)
                 case curses.KEY_ENTER | 10:
                     self.is_searching = False
                     curses.curs_set(False)
@@ -192,3 +202,8 @@ class TableView:
                     self.search = None
                 case 4:
                     raise ExitException
+                case _:
+                    char = chr(key)
+                    if char.isprintable():
+                        self.search = self.search = self.search[:self.search_pos] + char + self.search[self.search_pos:]
+                        self.search_pos += 1
