@@ -19,6 +19,9 @@ class BookView(TableView):
                 lambda datestr:datetime.datetime.strptime(datestr, '%I:%M%p %m-%d-%Y') ]
         super().__init__()
     
+    def new(self):
+        pass
+
     def draw(self, stdscr):
         stdscr.move(0,0)
         stdscr.clrtoeol()
