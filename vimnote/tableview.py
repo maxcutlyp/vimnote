@@ -1,4 +1,5 @@
 from .exceptions import ExitException
+from .textbox import TextBox
 import curses
 import math
 import logging
@@ -20,11 +21,10 @@ class TableView:
         self.scroll = 0
         self.sort_by = [3, True] # sort by last edited descending by default
         self.search_is_visible = False
-        self.text_edit = None
         self.text_edit_mode = False
-        self.text_edit_pos = 0
         self.effective_rows = len(self.content)
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
+        self.searchbox = TextBox(prompt='Search: ')
 
         self.noscroll_size = 0.5 # the middle 50% can be navigated without scrolling
 
@@ -103,10 +103,7 @@ class TableView:
         if not self.search_is_visible:
             stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
         else:
-            if self.text_edit_mode:
-                stdscr.addstr(2, 0, ' ' * curses.COLS, curses.color_pair(2))
-            stdscr.addstr(2, num_size + 1, f'Search: {self.text_edit}', curses.color_pair(2) if self.text_edit_mode else curses.color_pair(0))
-            stdscr.move(2, num_size + 9 + self.text_edit_pos)
+            self.searchbox.draw(stdscr, 2, 0, curses.COLS - num_size - 1, curses.color_pair(2) if self.text_edit_mode else curses.color_pair(0), left_offset=num_size+1)
         
     def draw(self, stdscr):
         sizes = self.get_sizes()
@@ -127,7 +124,7 @@ class TableView:
         for real_index,row in enumerate(self.content):
             if row_num == self.selected:
                 self.real_selected = real_index
-            if self.search_is_visible and any(word not in row[0] for word in self.text_edit.split()):
+            if self.search_is_visible and any(word not in row[0] for word in self.searchbox.text.split()):
                 continue
             color_pair = curses.color_pair(2) if row_num == self.selected and not self.text_edit_mode else curses.color_pair(0)
             self.pad.addstr(row_num, 0, f'{row_num+1:{num_size}}', color_pair)
@@ -163,7 +160,7 @@ class TableView:
                 case key if key == ord('/'):
                     self.text_edit_mode = True
                     if not self.search_is_visible:
-                        self.text_edit = ''
+                        self.searchbox.reset()
                         self.search_is_visible = True
                     curses.curs_set(True)
                 case key if key == ord('q'):
@@ -180,44 +177,19 @@ class TableView:
                     self.switch_sort(3)
                 case 27: # escape
                     if self.search_is_visible:
-                        self.text_edit = None
+                        self.searchbox.reset()
                         self.search_is_visible = False
-                        self.text_edit_pos = 0
                     else:
                         self.on_escape()
                 case curses.KEY_ENTER | 10:
                     self.on_enter(self.selected)
         else:
-            logging.debug(key)
-            match key:
-                case curses.KEY_BACKSPACE | 127 | 8:
-                    self.text_edit = self.text_edit[:self.text_edit_pos - 1] + self.text_edit[self.text_edit_pos:]
-                    self.text_edit_pos = max(self.text_edit_pos - 1, 0)
-                case curses.KEY_DC:
-                    self.text_edit = self.text_edit[:self.text_edit_pos] + self.text_edit[self.text_edit_pos + 1:]
-                    self.text_edit_pos = min(self.text_edit_pos, len(self.text_edit))
-                case curses.KEY_LEFT:
-                    self.text_edit_pos = max(self.text_edit_pos - 1, 0)
-                case curses.KEY_RIGHT:
-                    self.text_edit_pos = min(self.text_edit_pos + 1, len(self.text_edit))
-                case curses.KEY_UP:
-                    self.text_edit_pos = 0
-                case curses.KEY_DOWN:
-                    self.text_edit_pos = len(self.text_edit)
-                case curses.KEY_ENTER | 10:
+            match self.searchbox.handle_keypress(key):
+                case 0: # enter
                     self.text_edit_mode = False
                     curses.curs_set(False)
                     self.move_row(0)
-                case 27: # escape
+                case 1: # escape
                     self.text_edit_mode = False
-                    self.text_edit_pos = 0
                     curses.curs_set(False)
-                    self.text_edit = None
                     self.search_is_visible = False
-                case 4:
-                    raise ExitException
-                case _:
-                    char = chr(key)
-                    if char.isprintable():
-                        self.text_edit = self.text_edit = self.text_edit[:self.text_edit_pos] + char + self.text_edit[self.text_edit_pos:]
-                        self.text_edit_pos += 1
