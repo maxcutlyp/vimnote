@@ -25,6 +25,7 @@ class TableView:
         self.effective_rows = len(self.content)
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
         self.searchbox = TextBox(prompt='Search: ')
+        self.number_buffer = ''
 
         self.noscroll_size = 0.5 # the middle 50% can be navigated without scrolling
 
@@ -146,6 +147,13 @@ class TableView:
 
     def handle_keypress(self, key: int):
         if not self.text_edit_mode:
+            if (char := chr(key)) in '01234567890':
+                self.number_buffer += char
+                if (row := int(self.number_buffer) - 1) <= self.effective_rows:
+                    self.move_row(row)
+                return
+            else:
+                self.number_buffer = ''
             match key:
                 case key if key == ord('j'):
                     if self.selected < self.effective_rows:
