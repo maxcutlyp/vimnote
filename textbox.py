@@ -1,10 +1,10 @@
 import curses
 
 class TextBox:
-    def __init__(self, length: int, y: int, x: int):
+    def __init__(self):
         pass
 
-    def draw(self, win):
+    def draw(self, win, length: int, y: int, x: int):
         pass
 
     def handle_keypress(key: int):
