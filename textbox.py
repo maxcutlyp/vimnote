@@ -7,5 +7,5 @@ class TextBox:
     def draw(self, win):
         pass
 
-    def handle_keypress(key):
+    def handle_keypress(key: int):
         pass
