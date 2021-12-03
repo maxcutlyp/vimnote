@@ -50,10 +50,10 @@ class TableView:
     def on_escape(self):
         pass
 
-    def new(self):
+    def new(self, name: str):
         pass
 
-    def rename(self, row: int):
+    def rename(self, row: int, new_name: str):
         pass
 
     def delete(self, row: int):
@@ -78,15 +78,23 @@ class TableView:
         sizes[1] += 1 # dates look too squished next to each other
         return sizes
 
+    def move_cursor_to_editbox_cursor(self, stdscr, x_offset: int):
+        # move() doesn't work on pads for some reason so we manually place the cursor where it would be on stdscr instead
+        top, left = self.pad.getbegyx()
+        stdscr.move(top + self.selected - self.scroll, left + self.editbox.cursor_pos + x_offset)
+
     def draw_row(self, row_num: int, row: int, sizes: List[int], num_size: int, color_pair):
         so_far = 0
         for item,size in reversed(list(zip(row[1:], sizes))):
             self.pad.addstr(row_num, curses.COLS - size - so_far, item, color_pair)
             so_far += size + 1
         remaining_size = curses.COLS - num_size - so_far - 1
-        needs_overflow = len(row[0]) > remaining_size
-        size = remaining_size - (1 if needs_overflow else 0)
-        self.pad.addstr(row_num, num_size + 1, f'{row[0]:{size}.{size}}{"…" if needs_overflow else ""}', color_pair)
+        if self.text_edit_mode is TextEditOption.row and row_num == self.selected:
+            self.editbox.draw(self.pad, row_num, num_size + 1, remaining_size, color_pair)
+        else:
+            needs_overflow = len(row[0]) > remaining_size
+            size = remaining_size - (1 if needs_overflow else 0)
+            self.pad.addstr(row_num, num_size + 1, f'{row[0]:{size}.{size}}{"…" if needs_overflow else ""}', color_pair)
 
     def draw_row_header(self, stdscr, sizes: List[int], num_size: int):
         so_far = 0
@@ -143,6 +151,9 @@ class TableView:
         self.effective_rows = row_num - 1
         self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
 
+        if self.text_edit_mode is TextEditOption.row:
+            self.move_cursor_to_editbox_cursor(stdscr, num_size + 1)
+
     def resort_content(self):
         self.content.sort(key=lambda row: self.keys[self.sort_by[0]](row[self.sort_by[0]]), reverse=self.sort_by[1])
 
@@ -185,11 +196,18 @@ class TableView:
                         if self.search_is_visible:
                             self.searchbox.reset()
                             self.search_is_visible = False
+                        old_lines, old_cols = self.pad.getmaxyx()
+                        self.pad.resize(old_lines + 1, old_cols)
                         self.content.insert(0, [''] * len(self.headers))
                         self.move_row(0)
                         self.text_edit_mode = TextEditOption.row
+                        curses.curs_set(True)
                     case (_, 'r'):
                         self.text_edit_mode = TextEditOption.row
+                        text = self.content[self.real_selected][0]
+                        self.editbox.text = text
+                        self.editbox.cursor_pos = len(text)
+                        curses.curs_set(True)
                     case (_, 'q'):
                         raise ExitException
                     case (4, _):
@@ -223,6 +241,14 @@ class TableView:
             case TextEditOption.row:
                 match self.editbox.handle_keypress(key):
                     case 0: # enter
-                        pass
+                        self.text_edit_mode = TextEditOption.none
+                        curses.curs_set(False)
+                        if len(self.content[self.real_selected][1]) == 0: # dirty check to see if it's new vs renamed
+                            self.new(self.editbox.text)
+                        else:
+                            self.rename(self.real_selected, self.editbox.text)
                     case 1: # escape
-                        pass
+                        self.text_edit_mode = TextEditOption.none
+                        curses.curs_set(False)
+                        if len(self.content[self.real_selected][1]) == 0:
+                            self.content.pop(self.real_selected)

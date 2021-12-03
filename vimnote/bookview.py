@@ -19,7 +19,8 @@ class BookView(TableView):
                 lambda datestr:datetime.datetime.strptime(datestr, '%I:%M%p %m-%d-%Y') ]
         super().__init__()
     
-    def new(self):
+    def new(self, name: str):
+        # create directory, open as book
         pass
 
     def draw(self, stdscr):
