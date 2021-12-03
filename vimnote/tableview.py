@@ -25,6 +25,7 @@ class TableView:
         self.effective_rows = len(self.content)
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
         self.searchbox = TextBox(prompt='Search: ')
+        self.editbox = TextBox() # for renaming etc
         self.number_buffer = ''
 
         self.noscroll_size = 0.5 # the middle 50% can be navigated without scrolling
@@ -154,42 +155,46 @@ class TableView:
                 return
             else:
                 self.number_buffer = ''
-            match key:
-                case key if key == ord('j'):
+            match (key, char):
+                case (_, 'j'):
                     if self.selected < self.effective_rows:
                         self.move_row(self.selected + 1)
-                case key if key == ord('k'):
+                case (_, 'k'):
                     if self.selected > 0:
                         self.move_row(self.selected - 1)
-                case key if key == ord('G'):
+                case (_, 'G'):
                     self.move_row(self.effective_rows)
-                case key if key == ord('g'):
+                case (_, 'g'):
                     self.move_row(0)
-                case key if key == ord('/'):
+                case (_, '/'):
                     self.text_edit_mode = True
                     if not self.search_is_visible:
                         self.searchbox.reset()
                         self.search_is_visible = True
                     curses.curs_set(True)
-                case key if key == ord('q'):
+                case (_, 'n'):
+                    pass
+                case (_, 'r'):
+                    pass
+                case (_, 'q'):
                     raise ExitException
-                case 4:
+                case (4, _):
                     raise ExitException
-                case curses.KEY_F1:
+                case (curses.KEY_F1, _):
                     self.switch_sort(0)
-                case curses.KEY_F2:
+                case (curses.KEY_F2, _):
                     self.switch_sort(1)
-                case curses.KEY_F3:
+                case (curses.KEY_F3, _):
                     self.switch_sort(2)
-                case curses.KEY_F4:
+                case (curses.KEY_F4, _):
                     self.switch_sort(3)
-                case 27: # escape
+                case (27, _): # escape
                     if self.search_is_visible:
                         self.searchbox.reset()
                         self.search_is_visible = False
                     else:
                         self.on_escape()
-                case curses.KEY_ENTER | 10:
+                case (curses.KEY_ENTER | 10, _):
                     self.on_enter(self.selected)
         else:
             match self.searchbox.handle_keypress(key):
