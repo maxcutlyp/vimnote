@@ -4,7 +4,13 @@ import curses
 import math
 import logging
 
+from enum import Enum
 from typing import List, Callable, Any
+
+class TextEditOption(Enum):
+    none = 0
+    search = 1
+    row = 2
 
 class TableView:
     def __init__(self):
@@ -21,7 +27,7 @@ class TableView:
         self.scroll = 0
         self.sort_by = [3, True] # sort by last edited descending by default
         self.search_is_visible = False
-        self.text_edit_mode = False
+        self.text_edit_mode = TextEditOption.none
         self.effective_rows = len(self.content)
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
         self.searchbox = TextBox(prompt='Search: ')
@@ -105,7 +111,9 @@ class TableView:
         if not self.search_is_visible:
             stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
         else:
-            self.searchbox.draw(stdscr, 2, 0, curses.COLS - num_size - 1, curses.color_pair(2) if self.text_edit_mode else curses.color_pair(0), left_offset=num_size+1)
+            self.searchbox.draw(stdscr, 2, 0, curses.COLS - num_size - 1,
+                    curses.color_pair(2) if self.text_edit_mode is TextEditOption.search else curses.color_pair(0),
+                    left_offset=num_size + 1)
         
     def draw(self, stdscr):
         sizes = self.get_sizes()
@@ -120,7 +128,7 @@ class TableView:
 
         # content
         self.pad.clear()
-        if not self.text_edit_mode:
+        if self.text_edit_mode is not TextEditOption.search:
             self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
         row_num = 0 # not using enumerate because don't always increment
         for real_index,row in enumerate(self.content):
@@ -128,7 +136,7 @@ class TableView:
                 self.real_selected = real_index
             if self.search_is_visible and any(word not in row[0] for word in self.searchbox.text.split()):
                 continue
-            color_pair = curses.color_pair(2) if row_num == self.selected and not self.text_edit_mode else curses.color_pair(0)
+            color_pair = curses.color_pair(2) if row_num == self.selected and self.text_edit_mode is not TextEditOption.search else curses.color_pair(0)
             self.pad.addstr(row_num, 0, f'{row_num+1:{num_size}}', color_pair)
             self.draw_row(row_num, row, sizes, num_size, color_pair)
             row_num += 1
@@ -147,62 +155,74 @@ class TableView:
         self.resort_content()
 
     def handle_keypress(self, key: int):
-        if not self.text_edit_mode:
-            if (char := chr(key)) in '01234567890':
-                self.number_buffer += char
-                if (row := int(self.number_buffer) - 1) <= self.effective_rows:
-                    self.move_row(row)
-                return
-            else:
-                self.number_buffer = ''
-            match (key, char):
-                case (_, 'j'):
-                    if self.selected < self.effective_rows:
-                        self.move_row(self.selected + 1)
-                case (_, 'k'):
-                    if self.selected > 0:
-                        self.move_row(self.selected - 1)
-                case (_, 'G'):
-                    self.move_row(self.effective_rows)
-                case (_, 'g'):
-                    self.move_row(0)
-                case (_, '/'):
-                    self.text_edit_mode = True
-                    if not self.search_is_visible:
-                        self.searchbox.reset()
-                        self.search_is_visible = True
-                    curses.curs_set(True)
-                case (_, 'n'):
-                    pass
-                case (_, 'r'):
-                    pass
-                case (_, 'q'):
-                    raise ExitException
-                case (4, _):
-                    raise ExitException
-                case (curses.KEY_F1, _):
-                    self.switch_sort(0)
-                case (curses.KEY_F2, _):
-                    self.switch_sort(1)
-                case (curses.KEY_F3, _):
-                    self.switch_sort(2)
-                case (curses.KEY_F4, _):
-                    self.switch_sort(3)
-                case (27, _): # escape
-                    if self.search_is_visible:
-                        self.searchbox.reset()
+        match self.text_edit_mode:
+            case TextEditOption.none:
+                if (char := chr(key)) in '01234567890':
+                    self.number_buffer += char
+                    if (row := int(self.number_buffer) - 1) <= self.effective_rows:
+                        self.move_row(row)
+                    return
+                else:
+                    self.number_buffer = ''
+                match (key, char):
+                    case (_, 'j'):
+                        if self.selected < self.effective_rows:
+                            self.move_row(self.selected + 1)
+                    case (_, 'k'):
+                        if self.selected > 0:
+                            self.move_row(self.selected - 1)
+                    case (_, 'G'):
+                        self.move_row(self.effective_rows)
+                    case (_, 'g'):
+                        self.move_row(0)
+                    case (_, '/'):
+                        self.text_edit_mode = TextEditOption.search
+                        if not self.search_is_visible:
+                            self.searchbox.reset()
+                            self.search_is_visible = True
+                        curses.curs_set(True)
+                    case (_, 'n'):
+                        if self.search_is_visible:
+                            self.searchbox.reset()
+                            self.search_is_visible = False
+                        self.content.insert(0, [''] * len(self.headers))
+                        self.move_row(0)
+                        self.text_edit_mode = TextEditOption.row
+                    case (_, 'r'):
+                        self.text_edit_mode = TextEditOption.row
+                    case (_, 'q'):
+                        raise ExitException
+                    case (4, _):
+                        raise ExitException
+                    case (curses.KEY_F1, _):
+                        self.switch_sort(0)
+                    case (curses.KEY_F2, _):
+                        self.switch_sort(1)
+                    case (curses.KEY_F3, _):
+                        self.switch_sort(2)
+                    case (curses.KEY_F4, _):
+                        self.switch_sort(3)
+                    case (27, _): # escape
+                        if self.search_is_visible:
+                            self.searchbox.reset()
+                            self.search_is_visible = False
+                        else:
+                            self.on_escape()
+                    case (curses.KEY_ENTER | 10, _):
+                        self.on_enter(self.selected)
+            case TextEditOption.search:
+                match self.searchbox.handle_keypress(key):
+                    case 0: # enter
+                        self.text_edit_mode = TextEditOption.none
+                        curses.curs_set(False)
+                        self.move_row(0)
+                    case 1: # escape
+                        self.text_edit_mode = TextEditOption.none
+                        curses.curs_set(False)
                         self.search_is_visible = False
-                    else:
-                        self.on_escape()
-                case (curses.KEY_ENTER | 10, _):
-                    self.on_enter(self.selected)
-        else:
-            match self.searchbox.handle_keypress(key):
-                case 0: # enter
-                    self.text_edit_mode = False
-                    curses.curs_set(False)
-                    self.move_row(0)
-                case 1: # escape
-                    self.text_edit_mode = False
-                    curses.curs_set(False)
-                    self.search_is_visible = False
+            case TextEditOption.row:
+                match self.editbox.handle_keypress(key):
+                    case 0: # enter
+                        pass
+                    case 1: # escape
+                        pass
