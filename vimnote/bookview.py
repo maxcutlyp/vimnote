@@ -8,7 +8,9 @@ from typing import Dict, Any
 
 class BookView(TableView):
     def __init__(self, config: Dict[str, Any]):
-        try: book_dirs = filter(lambda f: f.is_dir(), os.scandir(os.path.expanduser(config['notedir'])))
+        self.config = config
+
+        try: book_dirs = filter(lambda f: f.is_dir(), os.scandir(config['notedir']))
         except FileNotFoundError: pass
         else:
             self.content = [[
@@ -27,8 +29,12 @@ class BookView(TableView):
         super().__init__()
     
     def new(self, name: str):
-        # create directory, open as book
-        pass
+        os.makedirs(os.path.join(self.config['notedir'], name))
+        raise OpenBookException(name)
+
+    def rename(self, row: int, new_name: str):
+        os.rename(os.path.join(self.config['notedir'], self.content[row][0]), os.path.join(self.config['notedir'], new_name))
+        self.content[row][0] = new_name
 
     def draw(self, stdscr):
         stdscr.move(0,0)

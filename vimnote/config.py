@@ -1,4 +1,5 @@
 import configparser
+import os
 
 def get_config(path: str):
     # config file doesn't have sections but parser requires sections
@@ -21,6 +22,6 @@ def get_config(path: str):
     options = [
             ('previewratio', default.getfloat, 0.5),
             ('confirmdelete', default.getboolean, True),
-            ('notedir', default.get, '~/.vimnote/'),
+            ('notedir', lambda path, *args, **kwargs: os.path.expanduser(default.get(path, *args, **kwargs)), os.path.expanduser('~/.vimnote/')),
             ('dateformat', default.get, '%I:%M%p %m-%d-%Y') ]
     return { key: getter(key, fallback=fallback) for (key, getter, fallback) in options }

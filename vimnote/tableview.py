@@ -207,6 +207,7 @@ class TableView:
                         self.pad.resize(old_lines + 1, old_cols)
                         self.content.insert(0, [''] * len(self.headers))
                         self.move_row(0)
+                        self.editbox.reset()
                         self.text_edit_mode = TextEditOption.row
                         curses.curs_set(True)
                     case (_, 'r'):

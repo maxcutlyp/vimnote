@@ -10,7 +10,7 @@ class NoteView(TableView):
         # TODO: convert note_dir and book to content here
         self.book = book
 
-        try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(os.path.expanduser(config['notedir']), book)))
+        try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
         except FileNotFoundError: pass
         else:
             self.content = [[
