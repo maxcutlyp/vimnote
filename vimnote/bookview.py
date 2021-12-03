@@ -1,4 +1,4 @@
-from .exceptions import ExitException
+from .exceptions import ExitException, OpenBookException
 from .tableview import TableView
 from .random_content import content
 import datetime
@@ -6,10 +6,8 @@ import datetime
 from typing import Callable
 
 class BookView(TableView):
-    def __init__(self, note_dir: str, open_book: Callable[[str],None] = lambda _:None):
+    def __init__(self, note_dir: str):
         # TODO: convert note_dir to content here
-        self.open_book = open_book
-
         self.content = content
         self.headers = ['BOOK TITLE (F1)  ', 'NOTES (F2)  ', 'CREATED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
@@ -30,7 +28,7 @@ class BookView(TableView):
 
     def on_enter(self, row):
         title = self.content[self.real_selected][0]
-        self.open_book(title)
+        raise OpenBookException(title)
 
     def on_escape(self):
         raise ExitException

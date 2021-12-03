@@ -1,14 +1,14 @@
 from .tableview import TableView
 from .random_content import content
+from .exceptions import CloseBookException
 import datetime
 
 from typing import Callable
 
 class NoteView(TableView):
-    def __init__(self, note_dir: str, book: str, close_book: Callable[[],None] = lambda:None):
+    def __init__(self, note_dir: str, book: str):
         # TODO: convert note_dir and book to content here
         self.book = book
-        self.close_book = close_book
 
         self.content = content
         self.headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'CREATED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
@@ -28,4 +28,4 @@ class NoteView(TableView):
         pass # TODO: spawn vim instance corresponding to selected note
 
     def on_escape(self):
-        self.close_book()
+        raise CloseBookException
