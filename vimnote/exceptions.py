@@ -10,3 +10,9 @@ class OpenBookException(Exception):
 
 class CloseBookException(Exception):
     pass
+
+class EditNoteException(Exception):
+    def __init__(self, book, title):
+        super().__init__(self)
+        self.book = book
+        self.title = title

@@ -1,5 +1,5 @@
 from .tableview import TableView
-from .exceptions import CloseBookException
+from .exceptions import CloseBookException, EditNoteException
 import datetime
 import os
 
@@ -9,6 +9,7 @@ class NoteView(TableView):
     def __init__(self, config: Dict[str, Any], book: str):
         # TODO: convert note_dir and book to content here
         self.book = book
+        self.config = config
 
         try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
         except FileNotFoundError: pass
@@ -28,6 +29,13 @@ class NoteView(TableView):
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
         super().__init__()
 
+    def new(self, title: str):
+        raise EditNoteException(self.book, title)
+
+    def rename(self, row: int, new_name: str):
+        os.rename(os.path.join(self.config['notedir'], self.book, self.content[row][0] + '.vmnt'), os.path.join(self.config['notedir'], self.book, new_name + '.vmnt'))
+        self.content[row][0] = new_name
+
     @staticmethod
     def _line_count(file):
         with open(file) as f:
@@ -38,8 +46,9 @@ class NoteView(TableView):
         stdscr.clrtoeol()
         super().draw(stdscr)
 
-    def on_enter(self, row):
-        pass # TODO: spawn vim instance corresponding to selected note
+    def on_enter(self, row: int):
+        title = self.content[row][0]
+        raise EditNoteException(self.book, title)
 
     def on_escape(self):
         raise CloseBookException

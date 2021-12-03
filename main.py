@@ -4,15 +4,27 @@ from vimnote.bookview import BookView
 from vimnote.noteview import NoteView
 from vimnote.tableview import TableView
 from vimnote.config import get_config
-from vimnote.exceptions import ExitException, OpenBookException, CloseBookException
+from vimnote.exceptions import ExitException, OpenBookException, CloseBookException, EditNoteException
+
 import sys
 import os
 import curses
 import logging
+import subprocess as sp
 
 from typing import List, Any
 
 CONFIG = get_config(os.path.expanduser('~/.config/vimnoterc'))
+
+class suspend_curses():
+    # see https://stackoverflow.com/a/20769213/16834825 for justification/implementation
+    def __enter__(self):
+        curses.endwin()
+
+    def __exit__(self, exc_type, exc_val, tb):
+        newscr = curses.initscr()
+        newscr.refresh()
+        curses.doupdate()
 
 def main(stdscr):
     stdscr.clear()
@@ -45,6 +57,10 @@ def main(stdscr):
             stdscr.clear()
             stdscr.refresh()
             view = BookView(CONFIG)
+        except EditNoteException as e:
+            with suspend_curses():
+                sp.run(['vim', os.path.join(CONFIG['notedir'], e.book, e.title + '.vmnt')])
+                view = NoteView(CONFIG, e.book)
 
 if __name__ == '__main__':
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
