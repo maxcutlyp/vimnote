@@ -1,5 +1,6 @@
 from .tableview import TableView
 from .exceptions import CloseBookException, EditNoteException
+from .deletedialog import DeleteDialog
 import datetime
 import os
 
@@ -35,6 +36,12 @@ class NoteView(TableView):
     def rename(self, row: int, new_name: str):
         os.rename(os.path.join(self.config['notedir'], self.book, self.content[row][0] + '.vmnt'), os.path.join(self.config['notedir'], self.book, new_name + '.vmnt'))
         self.content[row][0] = new_name
+
+    def show_delete_dialog(self, row: int):
+        self.delete_dialog = DeleteDialog(['Are you sure you want to delete', f'note "{self.content[row][0]}" from book "{self.book}"?', 'This cannot be undone.'])
+
+    def delete(self, row: int):
+        pass
 
     @staticmethod
     def _line_count(file):

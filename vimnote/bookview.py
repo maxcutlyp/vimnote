@@ -1,5 +1,6 @@
 from .exceptions import ExitException, OpenBookException
 from .tableview import TableView
+from .deletedialog import DeleteDialog
 import datetime
 import os
 import logging
@@ -35,6 +36,12 @@ class BookView(TableView):
     def rename(self, row: int, new_name: str):
         os.rename(os.path.join(self.config['notedir'], self.content[row][0]), os.path.join(self.config['notedir'], new_name))
         self.content[row][0] = new_name
+
+    def show_delete_dialog(self, row: int):
+        self.delete_dialog = DeleteDialog([f'Are you sure you want to delete book "{self.content[row][0]}"?', 'This cannot be undone.'])
+
+    def delete(self, row: int):
+        pass
 
     def draw(self, stdscr):
         stdscr.move(0,0)

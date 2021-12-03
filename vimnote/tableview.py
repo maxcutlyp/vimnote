@@ -1,5 +1,6 @@
 from .exceptions import ExitException
 from .textbox import TextBox
+from .deletedialog import DeleteDialog
 import curses
 import math
 import logging
@@ -34,7 +35,9 @@ class TableView:
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
         self.searchbox = TextBox(prompt='Search: ')
         self.editbox = TextBox() # for renaming etc
+        self.delete_dialog: DeleteDialog = None
         self.number_buffer = ''
+        self.schedule_clear = False
 
         self.noscroll_size = 0.5 # the middle 50% can be navigated without scrolling
 
@@ -59,6 +62,9 @@ class TableView:
         pass
 
     def delete(self, row: int):
+        pass
+
+    def show_delete_dialog(self, row: int):
         pass
 
     def move_row(self, row):
@@ -128,6 +134,10 @@ class TableView:
     def draw(self, stdscr):
         sizes = self.get_sizes()
         num_size = math.floor(math.log10(len(self.content) + 1) + 1)
+        
+        if self.schedule_clear:
+            stdscr.clear()
+            stdscr.refresh()
 
         # headers
         stdscr.addstr(1, 0, ' '*curses.COLS, curses.color_pair(1))
@@ -158,6 +168,9 @@ class TableView:
         self.effective_rows = row_num - 1
         self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
 
+        if self.delete_dialog is not None:
+            self.delete_dialog.draw(stdscr)
+
         if self.text_edit_mode is TextEditOption.row:
             self.move_cursor_to_editbox_cursor(stdscr, num_size + 1)
 
@@ -173,6 +186,16 @@ class TableView:
         self.resort_content()
 
     def handle_keypress(self, key: int):
+        if self.delete_dialog is not None:
+            match self.delete_dialog.handle_keypress(key):
+                case 0: # confirm
+                    self.delete_dialog = None
+                    self.delete(self.real_selected)
+                    self.schedule_clear = True
+                case 1: # cancel
+                    self.delete_dialog = None
+                    self.schedule_clear = True
+            return
         match self.text_edit_mode:
             case TextEditOption.none:
                 if (char := chr(key)) in '01234567890':
@@ -216,6 +239,8 @@ class TableView:
                         self.editbox.text = text
                         self.editbox.cursor_pos = len(text)
                         curses.curs_set(True)
+                    case (_, 'd'):
+                        self.show_delete_dialog(self.real_selected)
                     case (_, 'q'):
                         raise ExitException
                     case (4, _):
