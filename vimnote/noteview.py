@@ -41,7 +41,8 @@ class NoteView(TableView):
         self.delete_dialog = DeleteDialog(['Are you sure you want to delete', f'note "{self.content[row][0]}" from book "{self.book}"?', 'This cannot be undone.'])
 
     def delete(self, row: int):
-        pass
+        title = self.content.pop(row)[0]
+        os.remove(os.path.join(self.config['notedir'], self.book, title + '.vmnt'))
 
     @staticmethod
     def _line_count(file):

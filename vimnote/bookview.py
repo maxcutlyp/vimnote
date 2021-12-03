@@ -3,6 +3,7 @@ from .tableview import TableView
 from .deletedialog import DeleteDialog
 import datetime
 import os
+import shutil
 import logging
 
 from typing import Dict, Any
@@ -41,7 +42,8 @@ class BookView(TableView):
         self.delete_dialog = DeleteDialog([f'Are you sure you want to delete book "{self.content[row][0]}"?', 'This cannot be undone.'])
 
     def delete(self, row: int):
-        pass
+        title = self.content.pop(row)[0]
+        shutil.rmtree(os.path.join(self.config['notedir'], title))
 
     def draw(self, stdscr):
         stdscr.move(0,0)

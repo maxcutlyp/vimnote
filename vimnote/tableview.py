@@ -132,13 +132,18 @@ class TableView:
                     left_offset=num_size + 1)
         
     def draw(self, stdscr):
+        if self.schedule_clear:
+            # things that are written in subclass implementations will be cleared so call it again
+            # after clearing without running the rest of the function twice
+            stdscr.clear()
+            stdscr.refresh()
+            self.schedule_clear = False
+            self.draw(stdscr)
+            return
+
         sizes = self.get_sizes()
         num_size = math.floor(math.log10(len(self.content) + 1) + 1)
         
-        if self.schedule_clear:
-            stdscr.clear()
-            stdscr.refresh()
-
         # headers
         stdscr.addstr(1, 0, ' '*curses.COLS, curses.color_pair(1))
         self.draw_row_header(stdscr, sizes, num_size)
