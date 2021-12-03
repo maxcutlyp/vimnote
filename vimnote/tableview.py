@@ -6,7 +6,7 @@ import math
 import logging
 
 from enum import Enum
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Dict
 
 class TextEditOption(Enum):
     none = 0
@@ -14,7 +14,9 @@ class TextEditOption(Enum):
     row = 2
 
 class TableView:
-    def __init__(self):
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        
         # should be overridden by children, otherwise init to blank
         try: self.content
         except AttributeError: self.content: List[List[str]] = []
@@ -245,7 +247,10 @@ class TableView:
                         self.editbox.cursor_pos = len(text)
                         curses.curs_set(True)
                     case (_, 'd'):
-                        self.show_delete_dialog(self.real_selected)
+                        if self.config['confirmdelete']:
+                            self.show_delete_dialog(self.real_selected)
+                        else:
+                            self.delete(self.real_selected)
                     case (_, 'q'):
                         raise ExitException
                     case (4, _):

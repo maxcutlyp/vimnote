@@ -10,8 +10,6 @@ from typing import Dict, Any
 
 class BookView(TableView):
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
-
         try: book_dirs = filter(lambda f: f.is_dir(), os.scandir(config['notedir']))
         except FileNotFoundError: pass
         else:
@@ -28,7 +26,7 @@ class BookView(TableView):
                 lambda count:int(count),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
-        super().__init__()
+        super().__init__(config)
     
     def new(self, name: str):
         os.makedirs(os.path.join(self.config['notedir'], name))

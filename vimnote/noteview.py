@@ -10,7 +10,6 @@ class NoteView(TableView):
     def __init__(self, config: Dict[str, Any], book: str):
         # TODO: convert note_dir and book to content here
         self.book = book
-        self.config = config
 
         try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
         except FileNotFoundError: pass
@@ -28,7 +27,7 @@ class NoteView(TableView):
                 lambda count:int(count),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
-        super().__init__()
+        super().__init__(config)
 
     def new(self, title: str):
         raise EditNoteException(self.book, title)
