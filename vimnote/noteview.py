@@ -10,7 +10,7 @@ class NoteView(TableView):
         # TODO: convert note_dir and book to content here
         self.book = book
 
-        self.content = content
+        self.empty_content_message = ['No notes detected.', 'Hit n to make one!']
         self.headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'CREATED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
                 lambda title:title,

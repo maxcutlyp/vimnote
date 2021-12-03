@@ -8,7 +8,8 @@ from typing import Callable
 class BookView(TableView):
     def __init__(self, note_dir: str):
         # TODO: convert note_dir to content here
-        self.content = content
+
+        self.empty_content_message = ['No notebooks detected.', 'Hit n to make one!']
         self.headers = ['BOOK TITLE (F1)  ', 'NOTES (F2)  ', 'CREATED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
                 lambda title:title,

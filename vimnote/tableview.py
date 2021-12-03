@@ -21,6 +21,8 @@ class TableView:
         except AttributeError: self.headers: List[str] = []
         try: self.keys
         except AttributeError: self.keys: List[str] = []
+        try: self.empty_content_message
+        except AttributeError: self.empty_content_message: List[str] = []
 
         self.selected = 0
         self.real_selected = 0 # when searching
@@ -70,7 +72,7 @@ class TableView:
         self.scroll = max(0, min(self.scroll, self.effective_rows - (curses.LINES - 4)))
     
     def get_sizes(self):
-        sizes = [0] * (len(self.content[0]) - 1)
+        sizes = [0] * (len(self.headers)- 1)
         for row in self.content + [self.headers]:
             for i,item in enumerate(row[1:]):
                 if (size := len(item)) > sizes[i]:
@@ -137,7 +139,12 @@ class TableView:
         # content
         self.pad.clear()
         if self.text_edit_mode is not TextEditOption.search:
-            self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
+            if len(self.content) > 0:
+                try: self.pad.addstr(self.selected, 0, ' '*curses.COLS, curses.color_pair(2))
+                except curses.error: pass
+            else:
+                for i,line in enumerate(self.empty_content_message):
+                    stdscr.addstr(round(curses.LINES * 0.4) + i, round((curses.COLS - len(line))/2), line)
         row_num = 0 # not using enumerate because don't always increment
         for real_index,row in enumerate(self.content):
             if row_num == self.selected:
