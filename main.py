@@ -22,7 +22,7 @@ def main(stdscr):
 
     logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
-    view = BookView(CONFIG['notedir'])
+    view = BookView(CONFIG)
 
     while True:
         view.draw(stdscr)
@@ -38,9 +38,13 @@ def main(stdscr):
         try: view.handle_keypress(key)
         except ExitException: break
         except OpenBookException as e:
-            view = NoteView(CONFIG['notedir'], e.title)
+            stdscr.clear()
+            stdscr.refresh()
+            view = NoteView(CONFIG, e.title)
         except CloseBookException:
-            view = BookView(CONFIG['notedir'])
+            stdscr.clear()
+            stdscr.refresh()
+            view = BookView(CONFIG)
 
 if __name__ == '__main__':
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape

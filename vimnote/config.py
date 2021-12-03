@@ -21,5 +21,6 @@ def get_config(path: str):
     options = [
             ('previewratio', default.getfloat, 0.5),
             ('confirmdelete', default.getboolean, True),
-            ('notedir', default.get, '~/.vimnote/') ]
+            ('notedir', default.get, '~/.vimnote/'),
+            ('dateformat', default.get, '%I:%M%p %m-%d-%Y') ]
     return { key: getter(key, fallback=fallback) for (key, getter, fallback) in options }
