@@ -21,7 +21,10 @@ def get_config(path: str):
     default = cfg['DEFAULT']
     options = [
             ('previewratio', default.getfloat, 0.5),
+            ('previewside', default.get, 'bottom')
             ('confirmdelete', default.getboolean, True),
             ('notedir', lambda path, *args, **kwargs: os.path.expanduser(default.get(path, *args, **kwargs)), os.path.expanduser('~/.vimnote/')),
-            ('dateformat', default.get, '%I:%M%p %m-%d-%Y') ]
+            ('dateformat', default.get, '%I:%M%p %m-%d-%Y'),
+            ('defaultsortcol', default.getint, 2),
+            ('defaultsortascending', default.getboolean, True) ]
     return { key: getter(key, fallback=fallback) for (key, getter, fallback) in options }
