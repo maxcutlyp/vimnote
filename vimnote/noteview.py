@@ -13,7 +13,7 @@ class NoteView(TableView):
         self.book = book
 
         try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
-        except FileNotFoundError: pass
+        except (FileNotFoundError, TypeError): pass
         else:
             self.content = [[
                 os.path.splitext(note_file.name)[0],
@@ -40,6 +40,8 @@ class NoteView(TableView):
         self.update_preview()
 
     def update_preview(self):
+        if len(self.content) == 0:
+            return
         try: note_file = open(os.path.join(self.config['notedir'], self.book, self.content[self.real_selected][0] + '.vmnt'))
         except FileNotFoundError: return
         self.preview.update(self.real_selected, note_file)

@@ -63,5 +63,3 @@ defaultsortascending = true     # whether to sort the above column ascending or 
 
 - fixes
     - window resizing
-- features
-    - preview

@@ -1,6 +1,7 @@
 from .exceptions import ExitException, OpenBookException
 from .tableview import TableView
 from .deletedialog import DeleteDialog
+from .bookpreview import BookPreview
 import datetime
 import os
 import shutil
@@ -19,6 +20,7 @@ class BookView(TableView):
                 str(len(os.listdir(book_dir))),
                 datetime.datetime.fromtimestamp(os.stat(book_dir).st_mtime_ns/1_000_000_000).strftime(config['dateformat'])] for book_dir in book_dirs]
 
+        self.preview = BookPreview(curses.newpad(round((curses.LINES - 1) * config['previewratio']), curses.COLS))
         self.empty_content_message = ['No notebooks detected.', 'Hit n to make one!']
         self.headers = ['BOOK TITLE (F1)  ', 'NOTES (F2)  ', 'MODIFIED (F3)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
@@ -34,6 +36,14 @@ class BookView(TableView):
     def rename(self, row: int, new_name: str):
         os.rename(os.path.join(self.config['notedir'], self.content[row][0]), os.path.join(self.config['notedir'], new_name))
         self.content[row][0] = new_name
+
+    def show_preview(self):
+        self.update_preview()
+
+    def update_preview(self):
+        if len(self.content) == 0:
+            return
+        self.preview.update(self.real_selected, os.path.join(self.config['notedir'], self.content[self.real_selected][0]))
 
     def show_delete_dialog(self, row: int):
         size_cutoff = curses.COLS - 55

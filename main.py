@@ -23,6 +23,7 @@ class suspend_curses():
 
     def __exit__(self, exc_type, exc_val, tb):
         newscr = curses.initscr()
+        newscr.clear()
         newscr.refresh()
         curses.doupdate()
 
@@ -60,7 +61,7 @@ def main(stdscr):
         except EditNoteException as e:
             with suspend_curses():
                 sp.run(['vim', os.path.join(CONFIG['notedir'], e.book, e.title + '.vmnt')])
-                view = NoteView(CONFIG, e.book)
+            view = NoteView(CONFIG, e.book)
 
 if __name__ == '__main__':
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
