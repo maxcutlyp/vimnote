@@ -27,7 +27,7 @@ class suspend_curses():
         newscr.refresh()
         curses.doupdate()
 
-def main(stdscr):
+def main(stdscr, book):
     stdscr.clear()
     curses.curs_set(False)
     curses.use_default_colors()
@@ -35,7 +35,10 @@ def main(stdscr):
 
     logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
-    view = BookView(CONFIG)
+    if book is None:
+        view = BookView(CONFIG)
+    else:
+        view = NoteView(CONFIG, book)
 
     while True:
         try: view.draw(stdscr)
@@ -75,4 +78,6 @@ def main(stdscr):
 
 if __name__ == '__main__':
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
-    curses.wrapper(main)
+    try: book = sys.argv[1]
+    except IndexError: book = None
+    curses.wrapper(main, book)

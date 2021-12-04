@@ -13,7 +13,9 @@ class NoteView(TableView):
         self.book = book
 
         try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
-        except (FileNotFoundError, TypeError): pass
+        except TypeError: pass
+        except FileNotFoundError:
+            os.makedirs(os.path.join(config['notedir'], book))
         else:
             self.content = [[
                 os.path.splitext(note_file.name)[0],
