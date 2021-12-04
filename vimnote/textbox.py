@@ -8,8 +8,6 @@ class TextBox:
 
         self.noscroll_size = 0.9
 
-        self.window_cursor_pos = 0
-
         self.reset()
 
     def reset(self):
