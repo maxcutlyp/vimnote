@@ -3,6 +3,7 @@ from .exceptions import CloseBookException, EditNoteException
 from .deletedialog import DeleteDialog
 import datetime
 import os
+import curses
 
 from typing import Dict, Any
 
@@ -34,7 +35,12 @@ class NoteView(TableView):
         self.content[row][0] = new_name
 
     def show_delete_dialog(self, row: int):
-        self.delete_dialog = DeleteDialog(['Are you sure you want to delete', f'note "{self.content[row][0]}" from book "{self.book}"?', 'This cannot be undone.'])
+        size_cutoff = round(curses.COLS/2) - 21
+        if len(title := self.content[row][0]) > size_cutoff:
+            title = title[:size_cutoff] + '…'
+        if len(book_title := self.book) > size_cutoff:
+            book_title = book_title[:size_cutoff] + '…'
+        self.delete_dialog = DeleteDialog(['Are you sure you want to delete', f'note "{title}" from book "{book_title}"?', 'This cannot be undone.'])
 
     def delete(self, row: int):
         title = self.content.pop(row)[0]

@@ -272,6 +272,8 @@ class TableView:
                             self.search_is_visible = False
                         else:
                             self.on_escape()
+                    case (_, 'b'):
+                        self.on_escape()
                     case (curses.KEY_ENTER | 10, _):
                         self.on_enter(self.selected)
             case TextEditOption.search:

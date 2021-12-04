@@ -20,10 +20,11 @@ key|what it does
 `n`|creates a new book or note, then opens it
 `r`|renames the selected book or note
 `d`|prompts to delete the selected book or note
+`/`|starts searching notes or books
+`esc`, `b`|goes back to the previous view
 `p`|opens a preview of the selected book or note on the bottom half of the terminal
 `g`|goes to the top of the list
 `G`|goes to the bottom of the list
-`/`|starts searching
 `q`, `^C`, `^D`|quits VimNote
 
 Book and note views both have some analytics about each entry. From left to right, this is:
@@ -62,7 +63,6 @@ defaultsortascending = true     # whether to sort the above column ascending or 
 ## TODO:
 
 - fixes
-    - deletion dialog overflow
+    - window resizing
 - features
     - preview
-    - config options

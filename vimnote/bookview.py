@@ -5,6 +5,7 @@ import datetime
 import os
 import shutil
 import logging
+import curses
 
 from typing import Dict, Any
 
@@ -35,7 +36,10 @@ class BookView(TableView):
         self.content[row][0] = new_name
 
     def show_delete_dialog(self, row: int):
-        self.delete_dialog = DeleteDialog([f'Are you sure you want to delete book "{self.content[row][0]}"?', 'This cannot be undone.'])
+        size_cutoff = curses.COLS - 55
+        if len(title := self.content[row][0]) > size_cutoff:
+            title = title[:size_cutoff] + '…'
+        self.delete_dialog = DeleteDialog([f'Are you sure you want to delete book "{title}"?', 'This cannot be undone.'])
 
     def delete(self, row: int):
         title = self.content.pop(row)[0]
