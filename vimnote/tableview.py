@@ -1,6 +1,7 @@
 from .exceptions import ExitException
 from .textbox import TextBox
 from .deletedialog import DeleteDialog
+from .preview import Preview
 import curses
 import math
 import logging
@@ -26,6 +27,8 @@ class TableView:
         except AttributeError: self.keys: List[str] = []
         try: self.empty_content_message
         except AttributeError: self.empty_content_message: List[str] = []
+        try: self.preview
+        except AttributeError: self.preview: Preview = Preview(curses.newpad(1, 1))
 
         self.selected = 0
         self.real_selected = 0 # when searching
@@ -75,6 +78,9 @@ class TableView:
         pass
 
     def hide_preview(self):
+        pass
+    
+    def update_preview(self):
         pass
 
     def move_row(self, row):
@@ -188,9 +194,15 @@ class TableView:
             row_num += 1
         self.effective_rows = row_num - 1
         if self.preview_shown:
-            self.pad.refresh(self.scroll, 0, 3, 0, round((curses.LINES - 1) * (1 - self.config['previewratio'])), curses.COLS - 1)
+            height = round((curses.LINES - 1) * (1 - self.config['previewratio']))
+            if self.preview.internal_row != self.real_selected:
+                self.update_preview()
+            self.preview.draw()
+            self.preview.pad.refresh(0, 0, height + 1, 0, curses.LINES - 1, curses.COLS - 1)
+            self.pad.refresh(self.scroll, 0, 3, 0, height, curses.COLS - 1)
         else:
             self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
+
 
         if self.delete_dialog is not None:
             self.delete_dialog.draw(stdscr)

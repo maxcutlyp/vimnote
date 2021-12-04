@@ -1,6 +1,7 @@
 from .tableview import TableView
 from .exceptions import CloseBookException, EditNoteException
 from .deletedialog import DeleteDialog
+from .notepreview import NotePreview
 import datetime
 import os
 import curses
@@ -19,6 +20,7 @@ class NoteView(TableView):
                 str(self._line_count(note_file)),
                 datetime.datetime.fromtimestamp(os.stat(note_file).st_mtime_ns/1_000_000_000).strftime(config['dateformat'])] for note_file in note_files]
 
+        self.preview = NotePreview(curses.newpad(round((curses.LINES - 1) * config['previewratio']), curses.COLS - 1))
         self.empty_content_message = ['No notes detected.', 'Hit n to make one!']
         self.headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'MODIFIED (F3)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
@@ -33,6 +35,14 @@ class NoteView(TableView):
     def rename(self, row: int, new_name: str):
         os.rename(os.path.join(self.config['notedir'], self.book, self.content[row][0] + '.vmnt'), os.path.join(self.config['notedir'], self.book, new_name + '.vmnt'))
         self.content[row][0] = new_name
+
+    def show_preview(self):
+        self.update_preview()
+
+    def update_preview(self):
+        try: note_file = open(os.path.join(self.config['notedir'], self.book, self.content[self.real_selected][0] + '.vmnt'))
+        except FileNotFoundError: return
+        self.preview.update(self.real_selected, note_file)
 
     def show_delete_dialog(self, row: int):
         size_cutoff = round(curses.COLS/2) - 21
