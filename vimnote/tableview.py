@@ -217,10 +217,10 @@ class TableView:
                 else:
                     self.number_buffer = ''
                 match (key, char):
-                    case (_, 'j'):
+                    case (_, 'j') | (curses.KEY_DOWN, _):
                         if self.selected < self.effective_rows:
                             self.move_row(self.selected + 1)
-                    case (_, 'k'):
+                    case (_, 'k') | (curses.KEY_UP, _):
                         if self.selected > 0:
                             self.move_row(self.selected - 1)
                     case (_, 'G'):
