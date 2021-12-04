@@ -37,7 +37,7 @@ def main(stdscr, book):
     curses.use_default_colors()
     stdscr.refresh() # required for some reason, otherwise doesn't refresh until first keypress
 
-    logging.basicConfig(filename='log.log', level=logging.DEBUG)
+    # logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
     if book is None:
         view = BookView(CONFIG)

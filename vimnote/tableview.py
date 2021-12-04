@@ -298,8 +298,6 @@ class TableView:
                         self.switch_sort(1)
                     case (curses.KEY_F3, _):
                         self.switch_sort(2)
-                    case (curses.KEY_F4, _):
-                        self.switch_sort(3)
                     case (27, _): # escape
                         if self.search_is_visible:
                             self.searchbox.reset()
