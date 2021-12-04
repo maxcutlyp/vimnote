@@ -31,7 +31,7 @@ class suspend_curses():
         newscr.refresh()
         curses.doupdate()
 
-def main(stdscr, book):
+def real_main(stdscr, book):
     stdscr.clear()
     curses.curs_set(False)
     curses.use_default_colors()
@@ -80,11 +80,14 @@ def main(stdscr, book):
                 sp.run(['vim', os.path.join(CONFIG['notedir'], e.book, e.title + '.vmnt')])
             view = NoteView(CONFIG, e.book)
 
-if __name__ == '__main__':
+def main():
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
     try: book = sys.argv[1]
     except IndexError: book = None
     if book in ('--help', '-h'):
         print(__help__)
     else:
-        curses.wrapper(main, book)
+        curses.wrapper(real_main, book)
+
+if __name__ == '__main__':
+    main()
