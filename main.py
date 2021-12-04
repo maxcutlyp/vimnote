@@ -16,6 +16,10 @@ from typing import List, Any
 
 CONFIG = get_config(os.path.expanduser('~/.config/vimnote'))
 
+__help__ = '''vimnote - a vim-based TUI notetaking application
+USAGE: vimnote              - launch into vimnote
+       vimnote [book name]  - launch into vimnote and open a book immediately'''
+
 class suspend_curses():
     # see https://stackoverflow.com/a/20769213/16834825 for justification/implementation
     def __enter__(self):
@@ -45,7 +49,7 @@ def main(stdscr, book):
         except curses.error: pass
         stdscr.refresh()
 
-        # break on keyboard interrupt or if ExitException is raised by view
+        # break on keyboard interrupt
         try:
             key = stdscr.getch()
         except KeyboardInterrupt:
@@ -80,4 +84,7 @@ if __name__ == '__main__':
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
     try: book = sys.argv[1]
     except IndexError: book = None
-    curses.wrapper(main, book)
+    if book in ('--help', '-h'):
+        print(__help__)
+    else:
+        curses.wrapper(main, book)
