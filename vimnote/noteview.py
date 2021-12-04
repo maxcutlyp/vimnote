@@ -20,7 +20,7 @@ class NoteView(TableView):
                 str(self._line_count(note_file)),
                 datetime.datetime.fromtimestamp(os.stat(note_file).st_mtime_ns/1_000_000_000).strftime(config['dateformat'])] for note_file in note_files]
 
-        self.preview = NotePreview(curses.newpad(round((curses.LINES - 1) * config['previewratio']), curses.COLS - 1))
+        self.preview = NotePreview(curses.newpad(round((curses.LINES - 1) * config['previewratio']), curses.COLS))
         self.empty_content_message = ['No notes detected.', 'Hit n to make one!']
         self.headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'MODIFIED (F3)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
