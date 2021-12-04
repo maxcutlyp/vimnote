@@ -58,8 +58,3 @@ dateformat = %I:%M%p %m-%d-%Y   # see https://docs.python.org/3/library/datetime
 defaultsortcol = 2              # the default column to sort by, zero-indexed
 defaultsortascending = true     # whether to sort the above column ascending or descending (true or false)
 ```
-
-## TODO:
-
-- fixes
-    - window resizing

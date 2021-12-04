@@ -38,7 +38,8 @@ def main(stdscr):
     view = BookView(CONFIG)
 
     while True:
-        view.draw(stdscr)
+        try: view.draw(stdscr)
+        except curses.error: pass
         stdscr.refresh()
 
         # break on keyboard interrupt or if ExitException is raised by view
@@ -46,7 +47,16 @@ def main(stdscr):
             key = stdscr.getch()
         except KeyboardInterrupt:
             break
-        
+
+        # if the terminal has been resized, just reload the view
+        if key == curses.KEY_RESIZE:
+            # manually update curses.LINES and .COLS because they don't get automatically changed
+            curses.LINES, curses.COLS = stdscr.getmaxyx()
+            if isinstance(view, BookView):
+                view = BookView(CONFIG)
+            elif isinstance(view, NoteView):
+                view = NoteView(CONFIG, view.book)
+
         # else let the view handle it
         try: view.handle_keypress(key)
         except ExitException: break
