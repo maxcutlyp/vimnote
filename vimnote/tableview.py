@@ -37,6 +37,7 @@ class TableView:
         self.pad = curses.newpad(len(self.content)+1, curses.COLS)
         self.searchbox = TextBox(prompt='Search: ')
         self.editbox = TextBox() # for renaming etc
+        self.editbox.noscroll_size = 1.0
         self.delete_dialog: DeleteDialog = None
         self.number_buffer = ''
         self.schedule_clear = False
@@ -91,7 +92,7 @@ class TableView:
     def move_cursor_to_editbox_cursor(self, stdscr, x_offset: int):
         # move() doesn't work on pads for some reason so we manually place the cursor where it would be on stdscr instead
         top, left = self.pad.getbegyx()
-        stdscr.move(top + self.selected - self.scroll, left + self.editbox.cursor_pos + x_offset)
+        stdscr.move(top + self.selected - self.scroll, left + self.editbox.cursor_pos - self.editbox.scroll + x_offset)
 
     def draw_row(self, row_num: int, row: int, sizes: List[int], num_size: int, color_pair):
         so_far = 0
@@ -99,8 +100,9 @@ class TableView:
             self.pad.addstr(row_num, curses.COLS - size - so_far, item, color_pair)
             so_far += size + 1
         remaining_size = curses.COLS - num_size - so_far - 1
+        self.editbox.size = remaining_size # in case we need editbox later
         if self.text_edit_mode is TextEditOption.row and row_num == self.selected:
-            self.editbox.draw(self.pad, row_num, num_size + 1, remaining_size, color_pair)
+            self.editbox.draw(self.pad, row_num, num_size + 1, color_pair)
         else:
             needs_overflow = len(row[0]) > remaining_size
             size = remaining_size - (1 if needs_overflow else 0)
@@ -129,10 +131,10 @@ class TableView:
         if not self.search_is_visible:
             stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
         else:
-            self.searchbox.draw(stdscr, 2, 0, curses.COLS - num_size - 1,
+            self.searchbox.draw(stdscr, 2, 0,
                     curses.color_pair(2) if self.text_edit_mode is TextEditOption.search else curses.color_pair(0),
                     left_offset=num_size + 1)
-        
+
     def draw(self, stdscr):
         if self.schedule_clear:
             # things that are written in subclass implementations will be cleared so call it again
@@ -145,6 +147,8 @@ class TableView:
 
         sizes = self.get_sizes()
         num_size = math.floor(math.log10(len(self.content) + 1) + 1)
+
+        self.searchbox.size = curses.COLS - num_size - 1
         
         # headers
         stdscr.addstr(1, 0, ' '*curses.COLS, curses.color_pair(1))
@@ -244,7 +248,7 @@ class TableView:
                         self.text_edit_mode = TextEditOption.row
                         text = self.content[self.real_selected][0]
                         self.editbox.text = text
-                        self.editbox.cursor_pos = len(text)
+                        self.editbox.move_cursor_pos(len(text))
                         curses.curs_set(True)
                     case (_, 'd'):
                         if self.config['confirmdelete']:
