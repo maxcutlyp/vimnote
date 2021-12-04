@@ -16,15 +16,13 @@ class BookView(TableView):
             self.content = [[
                 book_dir.name,
                 str(len(os.listdir(book_dir))),
-                datetime.datetime.fromtimestamp(os.stat(book_dir).st_atime_ns/1_000_000_000).strftime(config['dateformat']),
                 datetime.datetime.fromtimestamp(os.stat(book_dir).st_mtime_ns/1_000_000_000).strftime(config['dateformat'])] for book_dir in book_dirs]
 
         self.empty_content_message = ['No notebooks detected.', 'Hit n to make one!']
-        self.headers = ['BOOK TITLE (F1)  ', 'NOTES (F2)  ', 'OPENED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
+        self.headers = ['BOOK TITLE (F1)  ', 'NOTES (F2)  ', 'MODIFIED (F3)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
                 lambda title:title,
                 lambda count:int(count),
-                lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
         super().__init__(config)
     

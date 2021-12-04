@@ -63,7 +63,6 @@ defaultsortascending = true     # whether to sort the above column ascending or 
 
 - fixes
     - deletion dialog overflow
-    - remove opened column
 - features
     - preview
     - config options

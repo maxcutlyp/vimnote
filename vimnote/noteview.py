@@ -8,7 +8,6 @@ from typing import Dict, Any
 
 class NoteView(TableView):
     def __init__(self, config: Dict[str, Any], book: str):
-        # TODO: convert note_dir and book to content here
         self.book = book
 
         try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
@@ -17,15 +16,13 @@ class NoteView(TableView):
             self.content = [[
                 os.path.splitext(note_file.name)[0],
                 str(self._line_count(note_file)),
-                datetime.datetime.fromtimestamp(os.stat(note_file).st_atime_ns/1_000_000_000).strftime(config['dateformat']),
                 datetime.datetime.fromtimestamp(os.stat(note_file).st_mtime_ns/1_000_000_000).strftime(config['dateformat'])] for note_file in note_files]
 
         self.empty_content_message = ['No notes detected.', 'Hit n to make one!']
-        self.headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'OPENED (F3)  ', 'MODIFIED (F4)  '] # two spaces so there's room for an arrow when used for sorting
+        self.headers = ['NOTE TITLE (F1)  ', 'LINES (F2)  ', 'MODIFIED (F3)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
                 lambda title:title,
                 lambda count:int(count),
-                lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
         super().__init__(config)
 

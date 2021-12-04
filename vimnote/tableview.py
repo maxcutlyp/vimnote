@@ -30,7 +30,7 @@ class TableView:
         self.selected = 0
         self.real_selected = 0 # when searching
         self.scroll = 0
-        self.sort_by = [3, True] # sort by last edited descending by default
+        self.sort_by = [config['defaultsortcol'], config['defaultsortascending']]
         self.search_is_visible = False
         self.text_edit_mode = TextEditOption.none
         self.effective_rows = len(self.content)
@@ -86,7 +86,6 @@ class TableView:
             for i,item in enumerate(row[1:]):
                 if (size := len(item)) > sizes[i]:
                     sizes[i] = size
-        sizes[1] += 1 # dates look too squished next to each other
         return sizes
 
     def move_cursor_to_editbox_cursor(self, stdscr, x_offset: int):
