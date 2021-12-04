@@ -14,7 +14,7 @@ import subprocess as sp
 
 from typing import List, Any
 
-CONFIG = get_config(os.path.expanduser('~/.config/vimnoterc'))
+CONFIG = get_config(os.path.expanduser('~/.config/vimnote'))
 
 class suspend_curses():
     # see https://stackoverflow.com/a/20769213/16834825 for justification/implementation

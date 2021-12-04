@@ -52,7 +52,6 @@ The config file for VimNote is `~/.config/vimnote`. The default is show below:
 
 ```ini
 previewratio = 0.5              # the amount of the terminal that the preview uses
-previewside = bottom            # the side that the preview opens into. allowed values: bottom, top, left, right
 confirmdelete = true            # whether or not to ask before deleting
 notedir = ~/.vimnote/           # where vimnote books and notes are stored
 dateformat = %I:%M%p %m-%d-%Y   # see https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior

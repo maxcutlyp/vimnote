@@ -42,7 +42,6 @@ class TableView:
         self.number_buffer = ''
         self.schedule_clear = False
         self.preview_shown = False
-        self.pad_location = (3, 0, curses.LINES - 1, curses.COLS - 1)
 
         self.noscroll_size = 0.5 # the middle 50% can be navigated without scrolling
 
@@ -73,25 +72,17 @@ class TableView:
         pass
 
     def show_preview(self):
-        self.schedule_clear = True
-        match self.config['previewside']:
-            case 'top':
-                pass
-            case 'left':
-                pass
-            case 'right':
-                pass
-            case _: # bottom
-                self.pad_location = (3, 0, round((curses.LINES - 1) * self.config['previewratio']), curses.COLS - 1)
-        self.move_row(self.selected) # refresh scroll location
+        pass
 
     def hide_preview(self):
-        self.pad_location = (3, 0, curses.LINES - 1, curses.COLS - 1)
-        self.move_row(self.selected) # refresh scroll location
+        pass
 
     def move_row(self, row):
         self.selected = row
-        height = self.pad_location[2] - self.pad_location[0]
+        if self.preview_shown:
+            height = round((curses.LINES - 1) * (1 - self.config['previewratio'])) - 3
+        else:
+            height = curses.LINES - 4
         upper_cutoff_size = round((1 - self.noscroll_size)/2 * height)
         lower_cutoff_size = round(self.noscroll_size*height) + upper_cutoff_size
         if self.selected > self.scroll + lower_cutoff_size:
@@ -196,7 +187,10 @@ class TableView:
             self.draw_row(row_num, row, sizes, num_size, color_pair)
             row_num += 1
         self.effective_rows = row_num - 1
-        self.pad.refresh(self.scroll, 0, *self.pad_location)
+        if self.preview_shown:
+            self.pad.refresh(self.scroll, 0, 3, 0, round((curses.LINES - 1) * (1 - self.config['previewratio'])), curses.COLS - 1)
+        else:
+            self.pad.refresh(self.scroll, 0, 3, 0, curses.LINES - 1, curses.COLS - 1)
 
         if self.delete_dialog is not None:
             self.delete_dialog.draw(stdscr)
@@ -280,6 +274,8 @@ class TableView:
                             self.show_preview()
                         else:
                             self.hide_preview()
+                        self.schedule_clear = True
+                        self.move_row(self.selected) # refresh scroll location
                     case (_, 'q'):
                         raise ExitException
                     case (4, _):
