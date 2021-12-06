@@ -82,8 +82,8 @@ def real_main(stdscr, book):
 
 def main():
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape
-    try: book = sys.argv[1]
-    except IndexError: book = None
+    if len(sys.argv) > 1:
+        book = ' '.join(sys.argv[1:])
     if book in ('--help', '-h'):
         print(__help__)
     else:
