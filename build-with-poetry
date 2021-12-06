@@ -1,0 +1,6 @@
+poetry build
+cd dist
+wheel unpack vimnote-$1-py3-none-any.whl
+mkdir -p vimnote-$1/vimnote-$1.data/data/share/bash-completion/completions/
+cp ../completions/bash/vimnote vimnote-$1/vimnote-$1.data/data/share/bash-completion/completions/vimnote
+wheel pack vimnote-$1
