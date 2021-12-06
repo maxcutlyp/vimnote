@@ -48,7 +48,7 @@ autocmd BufRead,BufNewFile *.vmnt set filetype=your_filetype_here
 where `your_filetype_here` is a valid Vim filetype. For a list of filetypes, type `:setfiletype ` (with a space at the end) in Vim and hit tab, or if you have a file whose type you want to use, run `:set filetype` (with a space in between) while editing that file. I use `markdown` but you can use whatever you'd like, or even make your own.
 
 ### ~/.config/vimnote
-The config file for VimNote is `~/.config/vimnote`. The default is show below:
+The config file for VimNote is `~/.config/vimnote`. The default is shown below:
 
 ```ini
 previewratio = 0.5              # the amount of the terminal that the preview uses
