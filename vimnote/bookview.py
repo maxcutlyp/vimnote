@@ -20,7 +20,8 @@ class BookView(TableView):
                 str(len(os.listdir(book_dir))),
                 datetime.datetime.fromtimestamp(os.stat(book_dir).st_mtime_ns/1_000_000_000).strftime(config['dateformat'])] for book_dir in book_dirs]
 
-        self.preview = BookPreview(curses.newpad(round((curses.LINES - 1) * config['previewratio']), curses.COLS))
+        height, width = stdscr.getmaxyx()
+        self.preview = BookPreview(curses.newpad(round((height - 1) * config['previewratio']), width))
         self.empty_content_message = ['No notebooks detected.', 'Hit n to make one!']
         self.headers = ['BOOK TITLE (F1)  ', 'NOTES (F2)  ', 'MODIFIED (F3)  '] # two spaces so there's room for an arrow when used for sorting
         self.keys = [
@@ -46,7 +47,7 @@ class BookView(TableView):
         self.preview.update(self.real_selected, os.path.join(self.config['notedir'], self.content[self.real_selected][0]))
 
     def show_delete_dialog(self, row: int):
-        size_cutoff = curses.COLS - 55
+        size_cutoff = self.stdscr.getmaxyx()[1] - 55
         if len(title := self.content[row][0]) > size_cutoff:
             title = title[:size_cutoff] + '…'
         self.delete_dialog = DeleteDialog([f'Are you sure you want to delete book "{title}"?', 'This cannot be undone.'])

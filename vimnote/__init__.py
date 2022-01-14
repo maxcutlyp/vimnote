@@ -45,9 +45,7 @@ def real_main(stdscr, book):
         view = NoteView(stdscr, CONFIG, book)
 
     while True:
-        try: view.draw()
-        except curses.error: pass
-        stdscr.refresh()
+        view.draw()
 
         # break on keyboard interrupt
         try:
@@ -55,14 +53,11 @@ def real_main(stdscr, book):
         except KeyboardInterrupt:
             break
 
-        # if the terminal has been resized, just reload the view
+        # if the terminal has been resized, clear stdscr and pad to avoid solitaire-ing
         if key == curses.KEY_RESIZE:
-            # manually update curses.LINES and .COLS because they don't get automatically changed
-            curses.LINES, curses.COLS = stdscr.getmaxyx()
-            if isinstance(view, BookView):
-                view = BookView(stdscr, CONFIG)
-            elif isinstance(view, NoteView):
-                view = NoteView(stdscr, CONFIG, view.book)
+            stdscr.clear()
+            view.pad.clear()
+        stdscr.refresh()
 
         # else let the view handle it
         try: view.handle_keypress(key)
