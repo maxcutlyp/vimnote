@@ -1,10 +1,10 @@
 #!/usr/bin/env python3.10
 
-from vimnote.bookview import BookView
-from vimnote.noteview import NoteView
-from vimnote.tableview import TableView
-from vimnote.config import get_config
-from vimnote.exceptions import ExitException, OpenBookException, CloseBookException, EditNoteException
+from .bookview import BookView
+from .noteview import NoteView
+from .tableview import TableView
+from .config import get_config
+from .exceptions import ExitException, OpenBookException, CloseBookException, EditNoteException
 
 import sys
 import os
@@ -40,12 +40,12 @@ def real_main(stdscr, book):
     # logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
     if book is None:
-        view = BookView(CONFIG)
+        view = BookView(stdscr, CONFIG)
     else:
-        view = NoteView(CONFIG, book)
+        view = NoteView(stdscr, CONFIG, book)
 
     while True:
-        try: view.draw(stdscr)
+        try: view.draw()
         except curses.error: pass
         stdscr.refresh()
 
@@ -60,9 +60,9 @@ def real_main(stdscr, book):
             # manually update curses.LINES and .COLS because they don't get automatically changed
             curses.LINES, curses.COLS = stdscr.getmaxyx()
             if isinstance(view, BookView):
-                view = BookView(CONFIG)
+                view = BookView(stdscr, CONFIG)
             elif isinstance(view, NoteView):
-                view = NoteView(CONFIG, view.book)
+                view = NoteView(stdscr, CONFIG, view.book)
 
         # else let the view handle it
         try: view.handle_keypress(key)
@@ -70,15 +70,15 @@ def real_main(stdscr, book):
         except OpenBookException as e:
             stdscr.clear()
             stdscr.refresh()
-            view = NoteView(CONFIG, e.title)
+            view = NoteView(stdscr, CONFIG, e.title)
         except CloseBookException:
             stdscr.clear()
             stdscr.refresh()
-            view = BookView(CONFIG)
+            view = BookView(stdscr, CONFIG)
         except EditNoteException as e:
             with suspend_curses():
                 sp.run(['vim', os.path.join(CONFIG['notedir'], e.book, e.title + '.vmnt')])
-            view = NoteView(CONFIG, e.book)
+            view = NoteView(stdscr, CONFIG, e.book)
 
 def main():
     os.environ['ESCDELAY'] = '25' # avoid long delay after hitting escape

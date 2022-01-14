@@ -15,7 +15,7 @@ class TextEditOption(Enum):
     row = 2
 
 class TableView:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, stdscr, config: Dict[str, Any]):
         self.config = config
         
         # should be overridden by children, otherwise init to blank
@@ -30,6 +30,7 @@ class TableView:
         try: self.preview
         except AttributeError: self.preview: Preview = Preview(curses.newpad(1, 1))
 
+        self.stdscr = stdscr
         self.selected = 0
         self.real_selected = 0 # when searching
         self.scroll = 0
@@ -105,10 +106,10 @@ class TableView:
                     sizes[i] = size
         return sizes
 
-    def move_cursor_to_editbox_cursor(self, stdscr, x_offset: int):
+    def move_cursor_to_editbox_cursor(self, x_offset: int):
         # move() doesn't work on pads for some reason so we manually place the cursor where it would be on stdscr instead
         top, left = self.pad.getbegyx()
-        stdscr.move(top + self.selected - self.scroll, left + self.editbox.cursor_pos - self.editbox.scroll + x_offset)
+        self.stdscr.move(top + self.selected - self.scroll, left + self.editbox.cursor_pos - self.editbox.scroll + x_offset)
 
     def draw_row(self, row_num: int, row: int, sizes: List[int], num_size: int, color_pair):
         so_far = 0
@@ -124,7 +125,7 @@ class TableView:
             size = remaining_size - (1 if needs_overflow else 0)
             self.pad.addstr(row_num, num_size + 1, f'{row[0]:{size}.{size}}{"…" if needs_overflow else ""}', color_pair)
 
-    def draw_row_header(self, stdscr, sizes: List[int], num_size: int):
+    def draw_row_header(self, sizes: List[int], num_size: int):
         so_far = 0
         sort_icon = 'v' if self.sort_by[1] else '^'
         for i,(item,size) in reversed(list(enumerate(zip(self.headers[1:], sizes)))):
@@ -135,30 +136,31 @@ class TableView:
             else:
                 color_pair = curses.color_pair(1)
                 offset = 0
-            stdscr.addstr(1, curses.COLS - size - so_far - offset, item, color_pair)
+            self.stdscr.addstr(1, curses.COLS - size - so_far - offset, item, color_pair)
             so_far += size + 1
         size = curses.COLS - num_size - so_far - 3
         is_selected_header = self.sort_by[0] == 0
-        stdscr.addstr(1, num_size, f' {self.headers[0]:{size}.{size}} {sort_icon if is_selected_header else ""} ', curses.color_pair(2) if is_selected_header else curses.color_pair(1))
+        self.stdscr.addstr(1, num_size, f' {self.headers[0]:{size}.{size}} {sort_icon if is_selected_header else ""} ',
+                curses.color_pair(2) if is_selected_header else curses.color_pair(1))
 
-    def draw_search(self, stdscr, num_size: int):
-        stdscr.move(2, 0)
-        stdscr.clrtoeol()
+    def draw_search(self, num_size: int):
+        self.stdscr.move(2, 0)
+        self.stdscr.clrtoeol()
         if not self.search_is_visible:
-            stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
+            self.stdscr.addstr(2, num_size + 1, 'Search (/)', curses.color_pair(3))
         else:
-            self.searchbox.draw(stdscr, 2, 0,
+            self.searchbox.draw(self.stdscr, 2, 0,
                     curses.color_pair(2) if self.text_edit_mode is TextEditOption.search else curses.color_pair(0),
                     left_offset=num_size + 1)
 
-    def draw(self, stdscr):
+    def draw(self):
         if self.schedule_clear:
             # things that are written in subclass implementations will be cleared so call it again
             # after clearing without running the rest of the function twice
-            stdscr.clear()
-            stdscr.refresh()
+            self.stdscr.clear()
+            self.stdscr.refresh()
             self.schedule_clear = False
-            self.draw(stdscr)
+            self.draw(self.stdscr)
             return
 
         sizes = self.get_sizes()
@@ -167,11 +169,11 @@ class TableView:
         self.searchbox.size = curses.COLS - num_size - 1
         
         # headers
-        stdscr.addstr(1, 0, ' '*curses.COLS, curses.color_pair(1))
-        self.draw_row_header(stdscr, sizes, num_size)
+        self.stdscr.addstr(1, 0, ' '*curses.COLS, curses.color_pair(1))
+        self.draw_row_header(sizes, num_size)
 
         # search bar
-        self.draw_search(stdscr, num_size)
+        self.draw_search(num_size)
 
         # content
         self.pad.clear()
@@ -181,7 +183,7 @@ class TableView:
                 except curses.error: pass
             else:
                 for i,line in enumerate(self.empty_content_message):
-                    stdscr.addstr(round(curses.LINES * 0.4) + i, round((curses.COLS - len(line))/2), line)
+                    self.stdscr.addstr(round(curses.LINES * 0.4) + i, round((curses.COLS - len(line))/2), line)
         row_num = 0 # not using enumerate because don't always increment
         for real_index,row in enumerate(self.content):
             if row_num == self.selected:
@@ -205,10 +207,10 @@ class TableView:
 
 
         if self.delete_dialog is not None:
-            self.delete_dialog.draw(stdscr)
+            self.delete_dialog.draw(self.stdscr)
 
         if self.text_edit_mode is TextEditOption.row:
-            self.move_cursor_to_editbox_cursor(stdscr, num_size + 1)
+            self.move_cursor_to_editbox_cursor(num_size + 1)
 
     def resort_content(self):
         self.content.sort(key=lambda row: self.keys[self.sort_by[0]](row[self.sort_by[0]]), reverse=self.sort_by[1])

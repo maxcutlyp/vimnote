@@ -9,7 +9,7 @@ import curses
 from typing import Dict, Any
 
 class NoteView(TableView):
-    def __init__(self, config: Dict[str, Any], book: str):
+    def __init__(self, stdscr, config: Dict[str, Any], book: str):
         self.book = book
 
         try: note_files = filter(lambda f: os.path.splitext(f)[1] == '.vmnt', os.scandir(os.path.join(config['notedir'], book)))
@@ -29,7 +29,7 @@ class NoteView(TableView):
                 lambda title:title,
                 lambda count:int(count),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
-        super().__init__(config)
+        super().__init__(stdscr, config)
 
     def new(self, title: str):
         raise EditNoteException(self.book, title)
@@ -65,10 +65,10 @@ class NoteView(TableView):
         with open(file) as f:
             return len(f.readlines())
 
-    def draw(self, stdscr):
-        stdscr.addstr(0,0, f'Book: {self.book}')
-        stdscr.clrtoeol()
-        super().draw(stdscr)
+    def draw(self):
+        self.stdscr.addstr(0,0, f'Book: {self.book}')
+        self.stdscr.clrtoeol()
+        super().draw()
 
     def on_enter(self, row: int):
         title = self.content[row][0]

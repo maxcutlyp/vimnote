@@ -11,7 +11,7 @@ import curses
 from typing import Dict, Any
 
 class BookView(TableView):
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, stdscr, config: Dict[str, Any]):
         try: book_dirs = filter(lambda f: f.is_dir(), os.scandir(config['notedir']))
         except FileNotFoundError: pass
         else:
@@ -27,7 +27,7 @@ class BookView(TableView):
                 lambda title:title,
                 lambda count:int(count),
                 lambda datestr:datetime.datetime.strptime(datestr, config['dateformat']) ]
-        super().__init__(config)
+        super().__init__(stdscr, config)
     
     def new(self, name: str):
         os.makedirs(os.path.join(self.config['notedir'], name))
@@ -55,10 +55,10 @@ class BookView(TableView):
         title = self.content.pop(row)[0]
         shutil.rmtree(os.path.join(self.config['notedir'], title))
 
-    def draw(self, stdscr):
-        stdscr.move(0,0)
-        stdscr.clrtoeol()
-        super().draw(stdscr)
+    def draw(self):
+        self.stdscr.move(0,0)
+        self.stdscr.clrtoeol()
+        super().draw()
 
     def on_enter(self, row):
         title = self.content[self.real_selected][0]
