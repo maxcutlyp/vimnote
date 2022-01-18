@@ -1,10 +1,17 @@
 #!/bin/bash
 
 _vimnote() {
+    local IFS=$'\n'
+
+    if [ ${#COMP_WORDS[@]} -gt 2 ] ; then
+        COMPREPLY=()
+        return
+    fi
+
     # manipulate config file (if it exists) into bash syntax so we can source it
     # do this by (in order): replace ; with # for comments
     #                        repalce : with = for variables
-    #                        remove all spaces around = (don't need to worry about : because we just replaced them all) for bash syntax
+    #                        remove all spaces around =
     # then grep notedir= (guaranteed to be in this format by previous step)
     if [ -r ~/.config/vimnote ] ; then
         source <(sed "s/;/#/g; s/:/=/g; s/ *= */=/g" ~/.config/vimnote | grep "notedir=")
@@ -18,7 +25,8 @@ _vimnote() {
 
     # get all subdirectories that start with the current word
     currentword=${COMP_WORDS[COMP_CWORD]}
-    validdirs=("${notedir}${currentword}"*/)
+    currentword_escapedspaces=$(echo $currentword | sed "s/\"//g; s/ /\\ /g")
+    validdirs=("${notedir}"${currentword_escapedspaces}*/)
 
     # remove all trailing /
     validdirs=("${validdirs[@]%/}")
@@ -27,4 +35,4 @@ _vimnote() {
     [[ -e "${validdirs[0]}" ]] && COMPREPLY=( "${validdirs[@]##*/}" )
 }
 
-complete -F _vimnote vimnote
+complete -o filenames -F _vimnote vimnote
