@@ -1,7 +1,7 @@
 # VimNote - a vim-based TUI notetaking application
 
 ## Install
-VimNote is a Python 3.10 application, so it can be installed with `pip install vimnote` (or `pip3` if necessary). You will also need Vim installed.
+VimNote is a Python 3.11 application, so it can be installed with `pip install vimnote` (or `pip3` if necessary). You will also need Vim installed.
 
 ## Getting started
 Run VimNote from the terminal, optionally specifying the name of a book to open. In bash, book names can be autocompleted with tab.
